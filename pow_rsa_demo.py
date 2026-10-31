@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-POW (Proof of Work) + RSA 签名验证实验
-1. 昵称 + nonce 不断做 SHA256，直到哈希以 4 个 0 开头，打印耗时
-2. 同上，直到以 5 个 0 开头，打印耗时
-3. 生成 RSA 公私钥对，用私钥对满足 POW 的 昵称+nonce 签名，用公钥验证
+POW (Proof of Work) + RSA signature verification demo
+1. Keep hashing `nickname + nonce` with SHA256 until the digest starts with 4 zeros; print elapsed time
+2. Same, until it starts with 5 zeros; print elapsed time
+3. Generate an RSA key pair, sign the POW-satisfying `nickname + nonce` with the private key, verify with the public key
 """
 import hashlib
 import time
@@ -15,7 +15,8 @@ NICKNAME = "Paco020304"
 
 
 def proof_of_work(nickname: str, zeros: int):
-    """不断递增 nonce 做 SHA256，直到哈希以 zeros 个 '0' 开头。返回 (nonce, hash, 耗时秒)。"""
+    """Increment nonce and SHA256-hash `nickname + nonce` until the hex digest
+    starts with `zeros` leading zeros. Returns (nonce, hash, elapsed_seconds)."""
     target = "0" * zeros
     nonce = 0
     start = time.time()
@@ -31,26 +32,27 @@ def proof_of_work(nickname: str, zeros: int):
 def main():
     print(f"昵称: {NICKNAME}\n")
 
-    # ---- POW: 4 个前导零 ----
+    # ---- POW: 4 leading zeros ----
     nonce4, hash4, t4 = proof_of_work(NICKNAME, 4)
     print(f"[POW 4 个 0] 找到 nonce = {nonce4}")
     print(f"  消息: {NICKNAME}{nonce4}")
     print(f"  SHA256: {hash4}")
     print(f"  耗时: {t4:.4f} 秒\n")
 
-    # ---- POW: 5 个前导零 ----
+    # ---- POW: 5 leading zeros ----
     nonce5, hash5, t5 = proof_of_work(NICKNAME, 5)
     print(f"[POW 5 个 0] 找到 nonce = {nonce5}")
     print(f"  消息: {NICKNAME}{nonce5}")
     print(f"  SHA256: {hash5}")
     print(f"  耗时: {t5:.4f} 秒\n")
 
-    # ---- RSA: 生成密钥对 ----
+    # ---- RSA: generate key pair ----
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     public_key = private_key.public_key()
     print("已生成 RSA-2048 公私钥对\n")
 
-    # ---- 用私钥对满足 POW 的 昵称+nonce 签名（这里对 5 个 0 的结果签名）----
+    # ---- Sign the POW-satisfying `nickname + nonce` with the private key ----
+    # (here we sign the 5-zero result)
     message = f"{NICKNAME}{nonce5}".encode("utf-8")
     signature = private_key.sign(
         message,
@@ -63,7 +65,7 @@ def main():
     print(f"签名消息: {message.decode()}")
     print(f"签名 (hex, 前 64 字节): {signature.hex()[:128]}...\n")
 
-    # ---- 用公钥验证 ----
+    # ---- Verify with the public key ----
     try:
         public_key.verify(
             signature,
@@ -78,7 +80,7 @@ def main():
     except Exception as e:
         print(f"公钥验证结果: 签名无效 ✘ ({e})")
 
-    # 顺带验证：篡改消息后应验证失败
+    # Sanity check: a tampered message must fail verification
     try:
         public_key.verify(
             signature,
