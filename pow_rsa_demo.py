@@ -11,9 +11,6 @@ import time
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
-NICKNAME = "Paco020304"
-
-
 def proof_of_work(nickname: str, zeros: int):
     """Increment nonce and SHA256-hash `nickname + nonce` until the hex digest
     starts with `zeros` leading zeros. Returns (nonce, hash, elapsed_seconds)."""
@@ -30,19 +27,21 @@ def proof_of_work(nickname: str, zeros: int):
 
 
 def main():
-    print(f"昵称: {NICKNAME}\n")
+    # Read the nickname at runtime; fall back to a default on empty input
+    nickname = input("请输入你的昵称 (直接回车使用 Paco020304): ").strip() or "Paco020304"
+    print(f"昵称: {nickname}\n")
 
     # ---- POW: 4 leading zeros ----
-    nonce4, hash4, t4 = proof_of_work(NICKNAME, 4)
+    nonce4, hash4, t4 = proof_of_work(nickname, 4)
     print(f"[POW 4 个 0] 找到 nonce = {nonce4}")
-    print(f"  消息: {NICKNAME}{nonce4}")
+    print(f"  消息: {nickname}{nonce4}")
     print(f"  SHA256: {hash4}")
     print(f"  耗时: {t4:.4f} 秒\n")
 
     # ---- POW: 5 leading zeros ----
-    nonce5, hash5, t5 = proof_of_work(NICKNAME, 5)
+    nonce5, hash5, t5 = proof_of_work(nickname, 5)
     print(f"[POW 5 个 0] 找到 nonce = {nonce5}")
-    print(f"  消息: {NICKNAME}{nonce5}")
+    print(f"  消息: {nickname}{nonce5}")
     print(f"  SHA256: {hash5}")
     print(f"  耗时: {t5:.4f} 秒\n")
 
@@ -53,7 +52,7 @@ def main():
 
     # ---- Sign the POW-satisfying `nickname + nonce` with the private key ----
     # (here we sign the 5-zero result)
-    message = f"{NICKNAME}{nonce5}".encode("utf-8")
+    message = f"{nickname}{nonce5}".encode("utf-8")
     signature = private_key.sign(
         message,
         padding.PSS(
